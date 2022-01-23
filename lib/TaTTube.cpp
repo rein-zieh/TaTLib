@@ -1,7 +1,7 @@
 /*
- * TaTLed.cpp
+ * TaTTube.cpp
  * 
- * Class for a LED
+ * Class for a Neon Tube
  *
  * This and That Toolkit (TaT) - V 0.1
  * A Collection of various Arduino programs and elctronic circuits for model railways
@@ -26,17 +26,17 @@
 
 // #define DEBUG 1
 
-#include "TaTLed.h"
+#include "TaTTube.h"
 
-TaTLed::TaTLed():TaTActor() {}
-TaTLed::TaTLed(uint8_t pin):TaTActor(pin) {
+TaTTube::TaTTube():TaTActor() {}
+TaTTube::TaTTube(uint8_t pin):TaTActor(pin) {
     if (pin) {
         pinMode(pin, OUTPUT);
         digitalWrite(pin, LOW);
     }
 }
 
-void TaTLed::init(uint8_t pin) {
+void TaTTube::init(uint8_t pin) {
     TaTActor::init(pin);
     if (pin) {
         pinMode(pin, OUTPUT);
@@ -44,35 +44,35 @@ void TaTLed::init(uint8_t pin) {
     }
 }
 
-void TaTLed::setDelay(uint32_t start, uint32_t end) {
+void TaTTube::setDelay(uint32_t start, uint32_t end) {
     startDelay = start;
     endDelay = end;
 }
 
-void TaTLed::setRandomDelay(uint32_t startmax, uint32_t endmax) {
+void TaTTube::setRandomDelay(uint32_t startmax, uint32_t endmax) {
     randomStartDelayMin = 0;
     randomStartDelayMax = startmax;
     randomEndDelayMin = 0;
     randomEndDelayMax = endmax;
 }
-void TaTLed::setRandomDelay(uint32_t startmin, uint32_t startmax, uint32_t endmin, uint32_t endmax) {
+void TaTTube::setRandomDelay(uint32_t startmin, uint32_t startmax, uint32_t endmin, uint32_t endmax) {
     randomStartDelayMin = startmin;
     randomStartDelayMax = startmax;
     randomEndDelayMin = endmin;
     randomEndDelayMax = endmax;
 }
 
-void TaTLed::on() {
-    statusShould = LED_START;
+void TaTTube::on() {
+    statusShould = TUBE_START;
     startDelay = randomStartDelayMax ? random(randomStartDelayMin, randomStartDelayMax) : startDelay;
 }
 
-void TaTLed::off() {
-    statusShould = LED_END;
+void TaTTube::off() {
+    statusShould = TUBE_END;
     endDelay = randomEndDelayMax ? random(randomEndDelayMin, randomEndDelayMax) : endDelay;
 }
 
-void TaTLed::tick() {
+void TaTTube::tick() {
     // Status change
     if (statusShould != statusIs) {
 
@@ -82,7 +82,7 @@ void TaTLed::tick() {
 
         statusIs = statusShould;
         switch (statusIs) {
-            case LED_OFF : {
+            case TUBE_OFF : {
                 #ifdef DEBUG
                     Serial.print("PIN aus: ");
                     Serial.println(pin);
@@ -91,7 +91,7 @@ void TaTLed::tick() {
                 if (pin) digitalWrite(pin, LOW);
                 return;
             }
-            case LED_ON : {
+            case TUBE_ON : {
                 #ifdef DEBUG
                     Serial.print("PIN ein: ");
                     Serial.println(pin);
@@ -100,22 +100,22 @@ void TaTLed::tick() {
                 if (pin) digitalWrite(pin, HIGH);
                 return;
             }
-            case LED_START : {
+            case TUBE_START : {
                 timer.set(startDelay);
                 return;
             }
-            case LED_END : {
+            case TUBE_END : {
                 timer.set(endDelay);
                 return;
             }
         }
     }
     // End of start delay
-    if (statusIs == LED_START && timer.check()) {
-        statusShould = LED_ON;
+    if (statusIs == TUBE_START && timer.check()) {
+        statusShould = TUBE_ON;
     }
     // End of end delay
-    if (statusIs == LED_END && timer.check()) {
-        statusShould = LED_OFF;
+    if (statusIs == TUBE_END && timer.check()) {
+        statusShould = TUBE_OFF;
     }
 }
