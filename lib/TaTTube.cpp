@@ -36,6 +36,18 @@ TaTTube::TaTTube(uint8_t pin):TaTActor(pin) {
     }
 }
 
+const uint8_t TaTTube::analogPattern[] = {
+    0, 220, 40, 10, 0, 0, 0, 0, 0, 0, 
+    220, 80, 20, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 180, 210, 230, 255
+};
+
+const uint8_t TaTTube::digitalPattern[] = {
+    1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 0, 0, 0, 0, 0, 1, 1,
+    1, 0, 0, 0, 0, 1, 1, 1, 0, 0
+};
+
 void TaTTube::init(uint8_t pin) {
     TaTActor::init(pin);
     if (pin) {
@@ -62,6 +74,26 @@ void TaTTube::setRandomDelay(uint32_t startmin, uint32_t startmax, uint32_t endm
     randomEndDelayMax = endmax;
 }
 
+void TaTTube::setFailure(uint32_t interval, uint32_t variation = 0, uint32_t duration) {
+    failureInterval = interval;
+    failureVariation = variation;
+    failureDuration = duration;
+}
+
+void TaTTube::setStartPattern(uint8_t *pattern, uint32_t patternSize, uint32_t patternFrequence = 10, bool pwm) {
+    startPattern = pattern;
+    startPatternSize = patternSize;
+    startPatternFrequence = patternFrequence;
+    startPatternPwm = pwm;
+}
+
+void TaTTube::setRestartPattern(uint8_t *pattern, uint32_t patternSize, uint32_t patternFrequence = 10, bool pwm) {
+    restartPattern = pattern;
+    restartPatternSize = patternSize;
+    restartPatternFrequence = patternFrequence;
+    restartPatternPwm = pwm;
+}
+
 void TaTTube::on() {
     statusShould = TUBE_START;
     startDelay = randomStartDelayMax ? random(randomStartDelayMin, randomStartDelayMax) : startDelay;
@@ -77,6 +109,7 @@ void TaTTube::tick() {
     if (statusShould != statusIs) {
 
         #ifdef DEBUG
+            Serial.print("statusShould: ");
             Serial.println(statusShould);
         #endif
 
@@ -91,13 +124,90 @@ void TaTTube::tick() {
                 if (pin) digitalWrite(pin, LOW);
                 return;
             }
-            case TUBE_ON : {
+            case TUBE_GLOW : {
                 #ifdef DEBUG
                     Serial.print("PIN ein: ");
                     Serial.println(pin);
                 #endif
 
                 if (pin) digitalWrite(pin, HIGH);
+
+                if (failureInterval) timer.set(failureInterval + random(0, failureVariation));
+
+                return;
+            }
+            case TUBE_FAILURE : {
+                #ifdef DEBUG
+                    Serial.print("TUBE_FAILURE: ");
+                    Serial.println(pin);
+                #endif
+
+                if (pin) digitalWrite(pin, LOW);
+                timer.set(failureDuration);
+                return;
+            }
+            case TUBE_RESTARTPATTERN_EVEN : {
+                #ifdef DEBUG
+                    Serial.print("TUBE_RESTARTPATTERN_EVEN: ");
+                    Serial.println(pin);
+                #endif
+
+                uint8_t value = restartPattern[patternIndex];
+                if (pin) {
+                    if (restartPatternPwm)
+                        analogWrite(pin, value);
+                    else 
+                        digitalWrite(pin, value);
+                }
+                timer.set(restartPatternFrequence);
+                return;
+            }
+            case TUBE_RESTARTPATTERN_ODD : {
+                #ifdef DEBUG
+                    Serial.print("TUBE_RESTARTPATTERN_ODD: ");
+                    Serial.println(pin);
+                #endif
+
+                uint8_t value = restartPattern[patternIndex];
+                if (pin) {
+                    if (restartPatternPwm)
+                        analogWrite(pin, value);
+                    else 
+                        digitalWrite(pin, value);
+                }
+                timer.set(restartPatternFrequence);
+                return;
+            }
+            case TUBE_STARTPATTERN_EVEN : {
+                #ifdef DEBUG
+                    Serial.print("TUBE_STARTPATTERN_EVEN: ");
+                    Serial.println(pin);
+                #endif
+
+                uint8_t value = startPattern[patternIndex];
+                if (pin) {
+                    if (startPatternPwm)
+                        analogWrite(pin, value);
+                    else 
+                        digitalWrite(pin, value);
+                }
+                timer.set(startPatternFrequence);
+                return;
+            }
+            case TUBE_STARTPATTERN_ODD : {
+                #ifdef DEBUG
+                    Serial.print("TUBE_STARTPATTERN_ODD: ");
+                    Serial.println(pin);
+                #endif
+
+                uint8_t value = startPattern[patternIndex];
+                if (pin) {
+                    if (startPatternPwm)
+                        analogWrite(pin, value);
+                    else 
+                        digitalWrite(pin, value);
+                }
+                timer.set(startPatternFrequence);
                 return;
             }
             case TUBE_START : {
@@ -110,12 +220,86 @@ void TaTTube::tick() {
             }
         }
     }
-    // End of start delay
-    if (statusIs == TUBE_START && timer.check()) {
-        statusShould = TUBE_ON;
-    }
-    // End of end delay
-    if (statusIs == TUBE_END && timer.check()) {
-        statusShould = TUBE_OFF;
+    
+    /*
+     * Check Timer and set to next steps
+     */
+
+    if (timer.check()) {
+        #ifdef DEBUG
+            Serial.print("timer checked: ");
+            Serial.println(pin);
+        #endif
+
+        // End of start delay
+        if (statusIs == TUBE_START) {
+            if (startPattern) {
+                statusShould = TUBE_STARTPATTERN_EVEN;
+                patternIndex = 0;
+            }
+            else { 
+                statusShould = TUBE_GLOW;
+            }
+        }
+        // End of end delay
+        else if (statusIs == TUBE_END) {
+            statusShould = TUBE_OFF;
+        }
+        // End of glowing
+        else if (statusIs == TUBE_GLOW) {
+            statusShould = TUBE_FAILURE;
+        }
+        // End of failure
+        else if (statusIs == TUBE_FAILURE) {
+            if (restartPattern) {
+                statusShould = TUBE_RESTARTPATTERN_EVEN;
+                patternIndex = 0;
+            }
+            else { 
+                statusShould = TUBE_GLOW;
+            }
+        }
+        
+        /* 
+         * Um das Programmiermuster konsistent zu halten wurden, für die Pattern 2 Status verwendet,
+         * da der obere Teil dieser Funktion nur auf Statusänderungen reagiert
+         */
+
+        // End of restart Pattern with even index
+        else if (statusIs == TUBE_RESTARTPATTERN_EVEN) {
+            patternIndex++;
+            if (patternIndex >= restartPatternSize) {
+                statusShould = TUBE_GLOW;
+            } else {
+                statusShould = TUBE_RESTARTPATTERN_ODD;
+            }
+        }
+        // End of restart Pattern with odd index
+        else if (statusIs == TUBE_RESTARTPATTERN_ODD) {
+            patternIndex++;
+            if (patternIndex >= restartPatternSize) {
+                statusShould = TUBE_GLOW;
+            } else {
+                statusShould = TUBE_RESTARTPATTERN_EVEN;
+            }
+        }
+        // End of start Pattern with even index
+        else if (statusIs == TUBE_STARTPATTERN_EVEN) {
+            patternIndex++;
+            if (patternIndex >= startPatternSize) {
+                statusShould = TUBE_GLOW;
+            } else {
+                statusShould = TUBE_STARTPATTERN_ODD;
+            }
+        }
+        // End of start Pattern with odd index
+        else if (statusIs == TUBE_STARTPATTERN_ODD) {
+            patternIndex++;
+            if (patternIndex >= startPatternSize) {
+                statusShould = TUBE_GLOW;
+            } else {
+                statusShould = TUBE_STARTPATTERN_EVEN;
+            }
+        }
     }
 }
