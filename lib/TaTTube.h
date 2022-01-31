@@ -27,20 +27,15 @@
 #ifndef TaTTube_h
 #define TaTTube_h
 
-#include "TaTBase.h"
+#include "TaTLed.h"
 
-class TaTTube : public TaTActor
+class TaTTube : public TaTLed
 {
     public:
 
         TaTTube();
         TaTTube(uint8_t pin);
 
-        void init(uint8_t pin);
-
-        void setDelay(uint32_t start, uint32_t end = 0);
-        void setRandomDelay(uint32_t startmax, uint32_t endmax = 0);
-        void setRandomDelay(uint32_t startmin, uint32_t startmax, uint32_t endmin, uint32_t endmax);
         void setFailure(uint32_t interval, uint32_t variation = 0, uint32_t duration = 10);
         void setRestartPattern(uint8_t *pattern, uint32_t patternSize, uint32_t patternFrequence = 10, bool pwm = false);
         void setStartPattern(uint8_t *pattern, uint32_t patternSize, uint32_t patternFrequence = 10, bool pwm = false);
@@ -58,13 +53,6 @@ class TaTTube : public TaTActor
         enum TAT_TUBESTATES { TUBE_OFF, TUBE_START, TUBE_STARTPATTERN_EVEN, TUBE_STARTPATTERN_ODD, TUBE_GLOW, TUBE_FAILURE, TUBE_RESTARTPATTERN_EVEN, TUBE_RESTARTPATTERN_ODD, TUBE_END };
         TAT_TUBESTATES statusShould = TUBE_OFF;
         TAT_TUBESTATES statusIs = TUBE_OFF;
-
-        uint32_t startDelay = 0;
-        uint32_t endDelay = 0;
-        uint32_t randomStartDelayMin = 0;
-        uint32_t randomStartDelayMax = 0;
-        uint32_t randomEndDelayMin = 0;
-        uint32_t randomEndDelayMax = 0;
 
         uint32_t failureInterval = 0;     // average fail interval in seconds, 0=no fails
         uint32_t failureVariation = 0;    // fail variation, 0=exact

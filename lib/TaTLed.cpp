@@ -44,32 +44,23 @@ void TaTLed::init(uint8_t pin) {
     }
 }
 
-void TaTLed::setDelay(uint32_t start, uint32_t end) {
+void TaTLed::setStartDelay(uint32_t start, uint32_t variation = 0) {
     startDelay = start;
+    startVariation = variation;
+}
+void TaTLed::setEndDelay(uint32_t end, uint32_t variation = 0) {
     endDelay = end;
-}
-
-void TaTLed::setRandomDelay(uint32_t startmax, uint32_t endmax) {
-    randomStartDelayMin = 0;
-    randomStartDelayMax = startmax;
-    randomEndDelayMin = 0;
-    randomEndDelayMax = endmax;
-}
-void TaTLed::setRandomDelay(uint32_t startmin, uint32_t startmax, uint32_t endmin, uint32_t endmax) {
-    randomStartDelayMin = startmin;
-    randomStartDelayMax = startmax;
-    randomEndDelayMin = endmin;
-    randomEndDelayMax = endmax;
+    endVariation = variation;
 }
 
 void TaTLed::on() {
     statusShould = LED_START;
-    startDelay = randomStartDelayMax ? random(randomStartDelayMin, randomStartDelayMax) : startDelay;
+    startDelay += random(startVariation);
 }
 
 void TaTLed::off() {
     statusShould = LED_END;
-    endDelay = randomEndDelayMax ? random(randomEndDelayMin, randomEndDelayMax) : endDelay;
+    endDelay += random(endVariation);
 }
 
 void TaTLed::tick() {
@@ -110,12 +101,16 @@ void TaTLed::tick() {
             }
         }
     }
-    // End of start delay
-    if (statusIs == LED_START && timer.check()) {
-        statusShould = LED_ON;
-    }
-    // End of end delay
-    if (statusIs == LED_END && timer.check()) {
-        statusShould = LED_OFF;
+    if (timer.check()) {
+        switch (statusIs) {
+            case LED_START : {
+                statusShould = LED_ON;
+                break;
+            }
+            case LED_END : {
+                statusShould = LED_OFF;
+                break;
+            }
+        }
     }
 }

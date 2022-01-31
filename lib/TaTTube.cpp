@@ -28,13 +28,8 @@
 
 #include "TaTTube.h"
 
-TaTTube::TaTTube():TaTActor() {}
-TaTTube::TaTTube(uint8_t pin):TaTActor(pin) {
-    if (pin) {
-        pinMode(pin, OUTPUT);
-        digitalWrite(pin, LOW);
-    }
-}
+TaTTube::TaTTube():TaTLed() {}
+TaTTube::TaTTube(uint8_t pin):TaTLed(pin) {}
 
 const uint8_t TaTTube::analogPattern[] = {
     0, 220, 40, 10, 0, 0, 0, 0, 0, 0, 
@@ -47,32 +42,6 @@ const uint8_t TaTTube::digitalPattern[] = {
     1, 1, 1, 0, 0, 0, 0, 0, 1, 1,
     1, 0, 0, 0, 0, 1, 1, 1, 0, 0
 };
-
-void TaTTube::init(uint8_t pin) {
-    TaTActor::init(pin);
-    if (pin) {
-        pinMode(pin, OUTPUT);
-        digitalWrite(pin, LOW);
-    }
-}
-
-void TaTTube::setDelay(uint32_t start, uint32_t end) {
-    startDelay = start;
-    endDelay = end;
-}
-
-void TaTTube::setRandomDelay(uint32_t startmax, uint32_t endmax) {
-    randomStartDelayMin = 0;
-    randomStartDelayMax = startmax;
-    randomEndDelayMin = 0;
-    randomEndDelayMax = endmax;
-}
-void TaTTube::setRandomDelay(uint32_t startmin, uint32_t startmax, uint32_t endmin, uint32_t endmax) {
-    randomStartDelayMin = startmin;
-    randomStartDelayMax = startmax;
-    randomEndDelayMin = endmin;
-    randomEndDelayMax = endmax;
-}
 
 void TaTTube::setFailure(uint32_t interval, uint32_t variation = 0, uint32_t duration) {
     failureInterval = interval;
@@ -96,12 +65,12 @@ void TaTTube::setRestartPattern(uint8_t *pattern, uint32_t patternSize, uint32_t
 
 void TaTTube::on() {
     statusShould = TUBE_START;
-    startDelay = randomStartDelayMax ? random(randomStartDelayMin, randomStartDelayMax) : startDelay;
+    startDelay += random(startVariation);
 }
 
 void TaTTube::off() {
     statusShould = TUBE_END;
-    endDelay = randomEndDelayMax ? random(randomEndDelayMin, randomEndDelayMax) : endDelay;
+    endDelay += random(endVariation);
 }
 
 void TaTTube::tick() {
@@ -231,74 +200,82 @@ void TaTTube::tick() {
             Serial.println(pin);
         #endif
 
-        // End of start delay
-        if (statusIs == TUBE_START) {
-            if (startPattern) {
-                statusShould = TUBE_STARTPATTERN_EVEN;
-                patternIndex = 0;
+        switch (statusIs) {
+            case TUBE_START : {
+                // End of start delay
+                if (startPattern) {
+                    statusShould = TUBE_STARTPATTERN_EVEN;
+                    patternIndex = 0;
+                }
+                else { 
+                    statusShould = TUBE_GLOW;
+                }
+                break;
             }
-            else { 
-                statusShould = TUBE_GLOW;
+            case TUBE_END : {
+                // End of end delay
+                statusShould = TUBE_OFF;
+                break;
             }
-        }
-        // End of end delay
-        else if (statusIs == TUBE_END) {
-            statusShould = TUBE_OFF;
-        }
-        // End of glowing
-        else if (statusIs == TUBE_GLOW) {
-            statusShould = TUBE_FAILURE;
-        }
-        // End of failure
-        else if (statusIs == TUBE_FAILURE) {
-            if (restartPattern) {
-                statusShould = TUBE_RESTARTPATTERN_EVEN;
-                patternIndex = 0;
+            case TUBE_GLOW : {
+                // End of glowing
+                statusShould = TUBE_FAILURE;
+                break;
             }
-            else { 
-                statusShould = TUBE_GLOW;
+            case TUBE_FAILURE : {
+                // End of failure
+                if (restartPattern) {
+                    statusShould = TUBE_RESTARTPATTERN_EVEN;
+                    patternIndex = 0;
+                }
+                else { 
+                    statusShould = TUBE_GLOW;
+                }
+                break;
             }
-        }
-        
-        /* 
-         * Um das Programmiermuster konsistent zu halten wurden, für die Pattern 2 Status verwendet,
-         * da der obere Teil dieser Funktion nur auf Statusänderungen reagiert
-         */
-
-        // End of restart Pattern with even index
-        else if (statusIs == TUBE_RESTARTPATTERN_EVEN) {
-            patternIndex++;
-            if (patternIndex >= restartPatternSize) {
-                statusShould = TUBE_GLOW;
-            } else {
-                statusShould = TUBE_RESTARTPATTERN_ODD;
+            /* 
+            * Um das Programmiermuster konsistent zu halten wurden, für die Pattern 2 Status verwendet,
+            * da der obere Teil dieser Funktion nur auf Statusänderungen reagiert
+            */
+            case TUBE_RESTARTPATTERN_EVEN : {
+                // End of restart Pattern with even index
+                patternIndex++;
+                if (patternIndex >= restartPatternSize) {
+                    statusShould = TUBE_GLOW;
+                } else {
+                    statusShould = TUBE_RESTARTPATTERN_ODD;
+                }
+                break;
             }
-        }
-        // End of restart Pattern with odd index
-        else if (statusIs == TUBE_RESTARTPATTERN_ODD) {
-            patternIndex++;
-            if (patternIndex >= restartPatternSize) {
-                statusShould = TUBE_GLOW;
-            } else {
-                statusShould = TUBE_RESTARTPATTERN_EVEN;
+            case TUBE_RESTARTPATTERN_ODD : {
+                // End of restart Pattern with odd index
+                patternIndex++;
+                if (patternIndex >= restartPatternSize) {
+                    statusShould = TUBE_GLOW;
+                } else {
+                    statusShould = TUBE_RESTARTPATTERN_EVEN;
+                }
+                break;
             }
-        }
-        // End of start Pattern with even index
-        else if (statusIs == TUBE_STARTPATTERN_EVEN) {
-            patternIndex++;
-            if (patternIndex >= startPatternSize) {
-                statusShould = TUBE_GLOW;
-            } else {
-                statusShould = TUBE_STARTPATTERN_ODD;
+            case TUBE_STARTPATTERN_EVEN : {
+                // End of start Pattern with even index
+                patternIndex++;
+                if (patternIndex >= startPatternSize) {
+                    statusShould = TUBE_GLOW;
+                } else {
+                    statusShould = TUBE_STARTPATTERN_ODD;
+                }
+                break;
             }
-        }
-        // End of start Pattern with odd index
-        else if (statusIs == TUBE_STARTPATTERN_ODD) {
-            patternIndex++;
-            if (patternIndex >= startPatternSize) {
-                statusShould = TUBE_GLOW;
-            } else {
-                statusShould = TUBE_STARTPATTERN_EVEN;
+            case TUBE_STARTPATTERN_ODD : {
+                // End of start Pattern with odd index
+                patternIndex++;
+                if (patternIndex >= startPatternSize) {
+                    statusShould = TUBE_GLOW;
+                } else {
+                    statusShould = TUBE_STARTPATTERN_EVEN;
+                }
+                break;
             }
         }
     }
