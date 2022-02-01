@@ -1,2 +1,4 @@
-# TaTLib
-This and That Library (Modellbahn-Kram)
+# TaTLib (Modellbahn-Kram)
+
+Arduino Klassen-Bibliothek für verschiedene Modellbahn-Basteleien.
+
