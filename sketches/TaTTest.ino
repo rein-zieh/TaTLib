@@ -26,34 +26,46 @@
 
 // #define DEBUG 1
  
-#include <TaTLed.h>
+#include <TaTPattern.h>
+#include <TaTTube.h>
+#include <TaTWelder.h>
 #include <TaTButtons.h>
 
-TaTLed led1(13);
-TaTLed led2(14);
+//TaTTube tube(13);
+TaTWelder welder(13);
 TaTButtonOnOff button(2);
 
 void setup() {
   // put your setup code here, to run once:
 
   #ifdef DEBUG
-  Serial.begin(9600);
-  Serial.println("Start");
+    Serial.begin(9600);
+    Serial.println("Start");
   #endif
   
   delay(10); // for safety
 
-  led1.setRandomDelay(2000,2000);
-  led2.setRandomDelay(0,2000,0,2000);
-  
-  button.connect(&led1);
-  button.connect(&led2);
+  //tube.setStartDelay(1000,3000);
+  //tube.setEndDelay(1000,3000);
+  //tube.setFailure(2000,3000,1000);
+  //tube.setStartPattern(TaTPatternDigitalTube, 30, 40);
+  //tube.setRestartPattern(TaTPatternDigitalTube, 30, 20);
+ 
+  welder.setStartDelay(1000,1000);
+  welder.setPause(100, 1000); 
+  welder.addPattern(TaTPatternDigitalWelder_1, 30, 20);
+  welder.addPattern(TaTPatternDigitalWelder_2, 20, 15);
+  welder.addPattern(TaTPatternDigitalWelder_2, 30, 10);
+
+  //button.connect(&welder);
+
+  welder.on();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
 
   button.tick();
-  led1.tick();
-  led2.tick();
+  //tube.tick();
+  welder.tick();
 }
