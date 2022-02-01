@@ -62,16 +62,16 @@ class TaTSensor
 
         void connect(TaTActor *actor);  //wire sensor with actor
 
-        virtual void tick();        //ticking, to call in the loop function 
+        virtual void tick();            //ticking, to call in the loop function 
 
     protected:
 
         void on();
         void off();
 
-        uint8_t pin;                // wired pin
-        TaTActor *actors[TAT_MAX_ACTORS_PER_BUTTON];       // array of wired actors
-        uint8_t nr_actors;          // mumber of actors in array
+        uint8_t pin;                                    // wired pin
+        TaTActor *actors[TAT_MAX_ACTORS_PER_BUTTON];    // array of wired actors
+        uint8_t nr_actors;                              // mumber of actors in array
 
         uint8_t sensorState = LOW;
 

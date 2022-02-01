@@ -38,10 +38,6 @@ class TaTLed : public TaTActor
 
         void init(uint8_t pin);
 
-        //void setDelay(uint32_t start, uint32_t end = 0);
-        //void setRandomDelay(uint32_t startmax, uint32_t endmax = 0);
-        //void setRandomDelay(uint32_t startmin, uint32_t startmax, uint32_t endmin, uint32_t endmax);
-
         void setStartDelay(uint32_t start, uint32_t variation = 0);
         void setEndDelay(uint32_t end, uint32_t variation = 0);
 
@@ -61,10 +57,6 @@ class TaTLed : public TaTActor
         uint32_t endDelay = 0;
         uint32_t startVariation = 0;
         uint32_t endVariation = 0;
-        // uint32_t randomStartDelayMin = 0;
-        // uint32_t randomStartDelayMax = 0;
-        // uint32_t randomEndDelayMin = 0;
-        // uint32_t randomEndDelayMax = 0;
 
         TaTTimer timer;
 

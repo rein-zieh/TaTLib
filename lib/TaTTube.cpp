@@ -31,18 +31,6 @@
 TaTTube::TaTTube():TaTLed() {}
 TaTTube::TaTTube(uint8_t pin):TaTLed(pin) {}
 
-const uint8_t TaTTube::analogPattern[] = {
-    0, 220, 40, 10, 0, 0, 0, 0, 0, 0, 
-    220, 80, 20, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 180, 210, 230, 255
-};
-
-const uint8_t TaTTube::digitalPattern[] = {
-    1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-    1, 1, 1, 0, 0, 0, 0, 0, 1, 1,
-    1, 0, 0, 0, 0, 1, 1, 1, 0, 0
-};
-
 void TaTTube::setFailure(uint32_t interval, uint32_t variation = 0, uint32_t duration) {
     failureInterval = interval;
     failureVariation = variation;
