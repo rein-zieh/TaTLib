@@ -41,7 +41,6 @@ class TaTLed : public TaTActor
         void setStartDelay(uint32_t start, uint32_t variation = 0);
         void setEndDelay(uint32_t end, uint32_t variation = 0);
 
-
         void on();
         void off();
 
