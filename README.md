@@ -2,7 +2,7 @@
 
 Die TaTLib ist eine Arduino Klassen-Bibliothek für verschiedene Modellbahn-Basteleien. 
 Noch eine Modellbahn-Bibliothek? Ja, es gibt zwar gefühlt für jedes Modellbahn-Problem x verschiedene Bibliothek,
-aber da ich gerne selbst Bastel und Programiere, muss es eben auch eine eigene Bibliothek sein ;-) .
+aber da ich gerne selbst bastel und programiere, muss es eben auch eine eigene Bibliothek sein ;-) .
 
 Die Klassen-Bibliothek wurde so entwickelt, dass sie von der Logik her für mich passt. 
 Es wurde nicht versucht den Code auf Effizienz zu optimieren. 
